@@ -62,6 +62,18 @@ Enjoy! — built by ChatGPT
         </select>
       </label>
       <button id="helpBtn" class="help" title="Petunjuk (?)" aria-label="Petunjuk">❓</button>
+      <label class="control">
+        Musik
+        <select id="musicSel" aria-label="Musik latar">
+          <option value="off">Mati</option>
+          <option value="calm">Tenang</option>
+          <option value="chip">8-bit</option>
+        </select>
+      </label>
+      <label class="control" title="Volume musik">
+        Vol
+        <input id="musicVol" type="range" min="0" max="100" value="50" />
+      </label>
       <button id="resetBtn" class="face" title="New game (R)" aria-label="New game">😊</button>
     </div>
 
@@ -91,6 +103,7 @@ Enjoy! — built by ChatGPT
       tabindex="0">
     </div>
     <div id="announcer" class="visually-hidden" aria-live="polite"></div>
+  <canvas id="confetti" class="confetti hidden" aria-hidden="true"></canvas>
   </main>
 
   <footer class="footer">

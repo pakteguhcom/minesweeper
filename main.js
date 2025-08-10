@@ -202,6 +202,212 @@ const questionToggle = $('#questionToggle');
 const resetBtn = $('#resetBtn');
 const announcer = $('#announcer');
 
+/* ----------- Audio & Celebration ----------- */
+class AudioEngine{
+  constructor(){
+    this.ctx = null;
+    this.master = null;
+    this.musicGain = null;
+    this.sfxGain = null;
+    this.loopTimer = null;
+    this.currentStyle = 'off';
+  }
+  ensure(){
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.master = this.ctx.createGain();
+    this.musicGain = this.ctx.createGain();
+    this.sfxGain = this.ctx.createGain();
+    this.musicGain.gain.value = 0.4;
+    this.sfxGain.gain.value = 0.6;
+    this.musicGain.connect(this.master);
+    this.sfxGain.connect(this.master);
+    this.master.connect(this.ctx.destination);
+  }
+  setMusicVolume(v){
+    this.ensure(); this.musicGain.gain.value = v;
+  }
+  stopLoop(){
+    if (this.loopTimer){ clearInterval(this.loopTimer); this.loopTimer=null; }
+  }
+  stop(){
+    this.stopLoop();
+    this.currentStyle='off';
+  }
+  playMusic(style){
+    if (style === 'off'){ this.stop(); return; }
+    this.ensure();
+    this.ctx.resume();
+    this.stopLoop();
+    this.currentStyle = style;
+    // Simple scheduler
+    let t = this.ctx.currentTime + 0.05;
+    const tempo = (style==='calm') ? 84 : 112; // bpm
+    const beat = 60/tempo;
+    const scheduleAhead = 0.5;
+    const notes = (style==='calm')
+      ? [0,2,4,7,9,7,4,2]   // pentatonic
+      : [0,7,12,7,0,5,9,5]; // arps
+    let step = 0;
+    const baseFreq = (style==='calm') ? 261.63 : 329.63;
+    const wave = (style==='calm') ? 'sine' : 'square';
+    const makeOsc = (freq, dur, gain=0.18) => {
+      const o = this.ctx.createOscillator();
+      o.type = wave;
+      o.frequency.value = freq;
+      const g = this.ctx.createGain();
+      const now = this.ctx.currentTime;
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(gain, now+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, now+dur);
+      const delay = this.ctx.createDelay();
+      delay.delayTime.value = 0.22;
+      const fb = this.ctx.createGain(); fb.gain.value = 0.25;
+      o.connect(g);
+      g.connect(this.musicGain);
+      g.connect(delay);
+      delay.connect(fb); fb.connect(delay);
+      delay.connect(this.musicGain);
+      o.start(); o.stop(now+dur+0.02);
+    };
+    const freqFor = (n)=> baseFreq * (2 ** (n/12));
+    const scheduler = () => {
+      while (t < this.ctx.currentTime + scheduleAhead){
+        const idx = notes[step % notes.length];
+        const f = freqFor(idx);
+        const dur = (style==='calm') ? beat*0.9 : beat*0.6;
+        makeOsc(f, dur);
+        if (step % 2 === 0){
+          const bass = freqFor(idx-24);
+          const o = this.ctx.createOscillator();
+          o.type = (style==='calm') ? 'sine' : 'square';
+          o.frequency.value = bass;
+          const g = this.ctx.createGain(); g.gain.value = 0.08;
+          o.connect(g); g.connect(this.musicGain);
+          o.start(t); o.stop(t + beat*0.45);
+        }
+        t += beat;
+        step++;
+      }
+    };
+    scheduler();
+    this.loopTimer = setInterval(scheduler, 100);
+  }
+  blip(freq=800, dur=0.08){
+    this.ensure();
+    const o = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    o.type='square'; o.frequency.value=freq;
+    g.gain.value=0.15;
+    o.connect(g); g.connect(this.sfxGain);
+    const now=this.ctx.currentTime;
+    o.start(now); o.stop(now+dur);
+  }
+  click(){ this.blip(900, 0.05); }
+  flag(){ this.blip(420, 0.08); }
+  question(){ this.blip(250, 0.1); }
+  unflag(){ this.blip(650, 0.06); }
+  fanfareWin(){
+    this.ensure(); this.ctx.resume();
+    this.stopLoop();
+    const seq = [ [880,.12], [988,.12], [1319,.24], [1175,.14], [1319,.28] ];
+    let t = this.ctx.currentTime+0.02;
+    for (const [f,d] of seq){
+      const o = this.ctx.createOscillator(); o.type='triangle'; o.frequency.value=f;
+      const g = this.ctx.createGain(); g.gain.value=0.22;
+      o.connect(g); g.connect(this.sfxGain);
+      o.start(t); o.stop(t+d);
+      t += d*0.9;
+    }
+    setTimeout(()=>{ if (this.currentStyle!=='off') this.playMusic(this.currentStyle); }, 1600);
+  }
+  fanfareLose(){
+    this.ensure(); this.ctx.resume();
+    this.stopLoop();
+    let t = this.ctx.currentTime+0.02;
+    for (let i=0;i<8;i++){
+      const o=this.ctx.createOscillator(); o.type='sawtooth';
+      const g=this.ctx.createGain(); g.gain.value=0.18;
+      o.frequency.setValueAtTime(600 - i*60, t+i*0.08);
+      o.connect(g); g.connect(this.sfxGain);
+      o.start(t+i*0.08); o.stop(t+i*0.08+0.18);
+    }
+    setTimeout(()=>{ if (this.currentStyle!=='off') this.playMusic(this.currentStyle); }, 1200);
+  }
+}
+const audio = new AudioEngine();
+const musicSel = $('#musicSel');
+const musicVol = $('#musicVol');
+if (musicSel){
+  const saved = localStorage.getItem('ms.music') || 'off';
+  musicSel.value = saved;
+  if (saved !== 'off') { audio.playMusic(saved); }
+  musicSel.addEventListener('change', ()=>{
+    const v = musicSel.value;
+    localStorage.setItem('ms.music', v);
+    if (v==='off') audio.stop();
+    else audio.playMusic(v);
+  });
+}
+if (musicVol){
+  const savedVol = Number(localStorage.getItem('ms.musicVol') || '50');
+  musicVol.value = String(savedVol);
+  audio.setMusicVolume(savedVol/100);
+  musicVol.addEventListener('input', ()=>{
+    const v = Number(musicVol.value);
+    localStorage.setItem('ms.musicVol', String(v));
+    audio.setMusicVolume(v/100);
+  });
+}
+window.addEventListener('pointerdown', ()=>{ try{ audio.ensure(); audio.ctx.resume(); }catch{} }, {once:true});
+
+// Confetti celebration
+const confetti = $('#confetti');
+let confettiRunning = false;
+function startConfetti(duration=1800){
+  if (!confetti) return;
+  confetti.classList.remove('hidden');
+  const ctx = confetti.getContext('2d');
+  let W = confetti.width = window.innerWidth;
+  let H = confetti.height = window.innerHeight;
+  const N = Math.min(160, Math.floor((W*H)/25000));
+  const parts = Array.from({length:N}, () => ({
+    x: Math.random()*W,
+    y: -20 - Math.random()*H*0.5,
+    vx: (Math.random()-0.5)*2,
+    vy: 2 + Math.random()*2.5,
+    size: 4 + Math.random()*5,
+    rot: Math.random()*Math.PI,
+    vr: (Math.random()-0.5)*0.2,
+    color: `hsl(${Math.floor(Math.random()*360)},80%,60%)`
+  }));
+  let start = null;
+  confettiRunning = true;
+  function frame(ts){
+    if (!start) start = ts;
+    const dt = 16/1000;
+    ctx.clearRect(0,0,W,H);
+    for (const p of parts){
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      if (p.y > H + 20) { p.y = -20; p.x = Math.random()*W; }
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6);
+      ctx.restore();
+    }
+    if (ts - start < duration && confettiRunning) requestAnimationFrame(frame);
+    else { confetti.classList.add('hidden'); confettiRunning=false; }
+  }
+  requestAnimationFrame(frame);
+}
+function screenShake(){
+  document.body.classList.add('shake');
+  setTimeout(()=>document.body.classList.remove('shake'), 600);
+}
+
+
 const themeSel = $('#themeSel');
 const helpBtn = $('#helpBtn');
 const helpModal = $('#helpModal');
@@ -420,7 +626,7 @@ function cellFromEventTarget(target) {
   return { el, x: Number(el.dataset.x), y: Number(el.dataset.y) };
 }
 
-function handleReveal(x, y) {
+function handleReveal(x, y) { audio.click();
   const wasReady = board.state === 'ready';
   const res = board.reveal(x, y);
   for (const upd of res.opened) applyUpdate(upd);
@@ -430,11 +636,15 @@ function handleReveal(x, y) {
     setFace('lost');
     stopTimer();
     announce('Boom! You hit a mine. Game over.');
+    audio.fanfareLose();
+    screenShake();
   } else if (board.state === 'won') {
     setFace('won');
     stopTimer();
     saveBestIfBetter(elapsed);
     announce('You win! All safe cells revealed.');
+    audio.fanfareWin();
+    startConfetti(2200);
   } else {
     setFace('playing');
   }
@@ -444,6 +654,9 @@ function handleFlag(x, y) {
   const res = board.toggleFlag(x, y, questionToggle.checked);
   for (const upd of res.changed) applyUpdate(upd);
   updateCounters();
+  if (res.sound === 'flag') audio.flag();
+  else if (res.sound === 'question') audio.question();
+  else if (res.sound === 'unflag' || res.sound==='clear') audio.click();
 }
 
 function handleChord(x, y) {
@@ -451,9 +664,9 @@ function handleChord(x, y) {
   for (const upd of res.opened) applyUpdate(upd);
   updateCounters();
   if (res.exploded) {
-    setFace('lost'); stopTimer(); announce('Boom! Chord exploded on a mine.');
+    setFace('lost'); stopTimer(); announce('Boom! Chord exploded on a mine.'); audio.fanfareLose(); screenShake();
   } else if (board.state === 'won') {
-    setFace('won'); stopTimer(); saveBestIfBetter(elapsed); announce('You win!');
+    setFace('won'); stopTimer(); saveBestIfBetter(elapsed); announce('You win!'); audio.fanfareWin(); startConfetti(2200);
   }
 }
 
