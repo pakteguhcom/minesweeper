@@ -1,0 +1,97 @@
+<!doctype html>
+<!--
+README (short)
+==============
+Minesweeper — HTML/CSS/JS (no libraries). Open this file directly in a browser.
+
+Controls
+- Left click / Tap: reveal
+- Right click / Long-press (400ms): flag (or question if enabled)
+- Double-click / Middle-click / C: chord (open neighbors if flags match number)
+- Keyboard: Arrows to move, Enter/Space reveal, F flag, C chord, R reset
+- First click is always safe (mines placed after first reveal, avoiding neighbors)
+- Mobile-friendly, accessible (ARIA roles/labels), dark/light mode
+
+Files
+- index.html — markup & UI shell
+- styles.css — styles (responsive, dark/light, color-safe numbers)
+- main.js — game logic + UI binding
+
+Enjoy! — built by ChatGPT
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Minesweeper — Vanilla JS</title>
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="color-scheme" content="light dark">
+</head>
+<body>
+  <header class="topbar">
+    <h1 class="title">Minesweeper</h1>
+
+    <div class="controls">
+      <label class="control">
+        Difficulty
+        <select id="level" aria-label="Difficulty">
+          <option value="beginner">Beginner (9×9, 10)</option>
+          <option value="intermediate">Intermediate (16×16, 40)</option>
+          <option value="expert">Expert (30×16, 99)</option>
+          <option value="custom">Custom…</option>
+        </select>
+      </label>
+
+      <div id="customWrap" class="custom hidden" aria-hidden="true">
+        <label>W <input id="wInput" type="number" min="5" max="60" value="9" inputmode="numeric"></label>
+        <label>H <input id="hInput" type="number" min="5" max="40" value="9" inputmode="numeric"></label>
+        <label>M <input id="mInput" type="number" min="1" max="2400" value="10" inputmode="numeric"></label>
+      </div>
+
+      <label class="control switch">
+        <input id="questionToggle" type="checkbox" />
+        <span>Question mark</span>
+      </label>
+
+      <button id="resetBtn" class="face" title="New game (R)" aria-label="New game">😊</button>
+    </div>
+
+    <div class="status">
+      <div class="stat">
+        <span class="label">Mines</span>
+        <span id="mineCounter" class="counter" aria-live="polite">000</span>
+      </div>
+      <div class="stat">
+        <span class="label">Time</span>
+        <span id="timer" class="counter" aria-live="polite">00:00</span>
+      </div>
+      <div class="stat">
+        <span class="label">Best</span>
+        <span id="bestTime" class="counter">—</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="grid"
+      class="grid"
+      role="grid"
+      aria-label="Minesweeper grid"
+      aria-rowcount="9"
+      aria-colcount="9"
+      tabindex="0">
+    </div>
+    <div id="announcer" class="visually-hidden" aria-live="polite"></div>
+  </main>
+
+  <footer class="footer">
+    <small>
+      Tip: on mobile, long‑press a cell to place a flag. Use the “Question mark” toggle
+      to cycle flags → question → clear.
+    </small>
+  </footer>
+
+  <script defer src="main.js"></script>
+  <noscript>This game needs JavaScript enabled.</noscript>
+</body>
+</html>
