@@ -202,6 +202,53 @@ const questionToggle = $('#questionToggle');
 const resetBtn = $('#resetBtn');
 const announcer = $('#announcer');
 
+const themeSel = $('#themeSel');
+const helpBtn = $('#helpBtn');
+const helpModal = $('#helpModal');
+const helpClose = $('#helpClose');
+let lastFocus = null;
+
+function applyTheme(value){
+  const root = document.documentElement;
+  if (value === 'light') { root.setAttribute('data-theme','light'); }
+  else if (value === 'dark') { root.setAttribute('data-theme','dark'); }
+  else { root.removeAttribute('data-theme'); } // system
+}
+
+(function restoreTheme(){
+  const t = localStorage.getItem('ms.theme') || 'system';
+  if (themeSel) themeSel.value = t;
+  applyTheme(t);
+})();
+
+if (themeSel){
+  themeSel.addEventListener('change', () => {
+    const v = themeSel.value;
+    localStorage.setItem('ms.theme', v);
+    applyTheme(v);
+  });
+}
+
+// Help modal
+function openHelp(){
+  lastFocus = document.activeElement;
+  helpModal.classList.remove('hidden');
+  helpModal.querySelector('.modal__panel').focus();
+}
+function closeHelp(){
+  helpModal.classList.add('hidden');
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+helpBtn?.addEventListener('click', openHelp);
+helpClose?.addEventListener('click', closeHelp);
+helpModal?.addEventListener('click', (e) => {
+  if (e.target.classList.contains('modal__backdrop')) closeHelp();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !helpModal.classList.contains('hidden')) closeHelp();
+});
+
+
 const LEVELS = {
   beginner:   { w:9,  h:9,  m:10, key:'beginner' },
   intermediate:{ w:16, h:16, m:40, key:'intermediate' },

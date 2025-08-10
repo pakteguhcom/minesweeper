@@ -147,3 +147,58 @@ main{ width: min(1100px, 96vw) }
 @media (max-width: 520px){
   .grid{ --cell-size: 1.8rem }
 }
+
+
+/* --- Explicit theme overrides --- */
+:root[data-theme="light"]{
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --text: #111827;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --danger: #dc2626;
+  --ok: #059669;
+  --shadow: 0 8px 24px rgba(0,0,0,.08);
+}
+:root[data-theme="dark"]{
+  --bg: #0b0f14;
+  --surface: #0f172a;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --accent: #60a5fa;
+  --danger: #f87171;
+  --ok: #34d399;
+  --shadow: 0 10px 28px rgba(0,0,0,.35);
+}
+
+/* --- Help Modal --- */
+.modal.hidden{ display:none }
+.modal{ position:fixed; inset:0; z-index:50; display:grid; grid-template-rows: 1fr; }
+.modal__backdrop{
+  position:absolute; inset:0;
+  background: rgba(0,0,0,.4);
+  backdrop-filter: blur(1px);
+}
+.modal__panel{
+  position:relative;
+  margin:auto;
+  width:min(680px, 92vw);
+  max-height: 86vh;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.3);
+  display:flex; flex-direction:column;
+}
+.modal__header{ display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid color-mix(in oklab, var(--muted) 30%, transparent) }
+.modal__content{ padding:14px 16px; overflow:auto }
+.modal__close{
+  font-size:20px; line-height:1; padding:4px 10px; border-radius: 10px; border:0;
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface)); cursor:pointer;
+}
+.controls .help{
+  font-size:16px; line-height:1; padding:8px 10px; border-radius: 10px; border:0;
+  background: color-mix(in oklab, var(--accent) 12%, var(--surface)); box-shadow: var(--shadow); cursor:pointer;
+}
+.modal__content ul{ margin: .4rem 0 .8rem 1.1rem }
+.modal__content h3{ margin: .6rem 0 .2rem }

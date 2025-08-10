@@ -53,6 +53,15 @@ Enjoy! — built by ChatGPT
         <span>Question mark</span>
       </label>
 
+      <label class="control">
+        Tema
+        <select id="themeSel" aria-label="Tema">
+          <option value="system">Sistem</option>
+          <option value="light">Terang</option>
+          <option value="dark">Gelap</option>
+        </select>
+      </label>
+      <button id="helpBtn" class="help" title="Petunjuk (?)" aria-label="Petunjuk">❓</button>
       <button id="resetBtn" class="face" title="New game (R)" aria-label="New game">😊</button>
     </div>
 
@@ -93,5 +102,38 @@ Enjoy! — built by ChatGPT
 
   <script defer src="main.js"></script>
   <noscript>This game needs JavaScript enabled.</noscript>
+
+  <div id="helpModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+    <div class="modal__panel">
+      <header class="modal__header">
+        <h2 id="helpTitle">Cara Bermain Minesweeper</h2>
+        <button id="helpClose" class="modal__close" aria-label="Tutup">×</button>
+      </header>
+      <div class="modal__content">
+        <p><strong>Tujuan:</strong> buka semua sel aman tanpa meledakkan ranjau.</p>
+        <ul>
+          <li>Angka pada sel menunjukkan jumlah ranjau di 8 kotak sekitar sel tersebut.</li>
+          <li>Gunakan <em>bendera</em> untuk menandai lokasi yang kamu yakini adalah ranjau.</li>
+          <li>Klik pertama selalu aman; area kosong akan terbuka otomatis.</li>
+        </ul>
+        <h3>Kontrol</h3>
+        <ul>
+          <li><strong>Klik kiri / Tap</strong>: buka sel</li>
+          <li><strong>Klik kanan / Tahan 400ms</strong>: pasang bendera (atau tanda tanya jika diaktifkan)</li>
+          <li><strong>Double‑click / Tombol tengah / C</strong>: <em>chord</em> (membuka tetangga jika jumlah bendera sudah cocok)</li>
+          <li><strong>Keyboard</strong>: Panah untuk bergerak, <strong>Enter/Space</strong> buka, <strong>F</strong> bendera, <strong>C</strong> chord, <strong>R</strong> reset</li>
+        </ul>
+        <h3>Tips</h3>
+        <ul>
+          <li>Jika sebuah sel bernomor <code>1</code> dan ada satu kotak tetangga yang belum dibuka, seringkali itulah ranjaunya.</li>
+          <li>Gunakan <em>chording</em> untuk mempercepat saat angka dan bendera sudah cocok.</li>
+          <li>Mode Custom memungkinkan ukuran papan dan jumlah ranjau yang fleksibel.</li>
+        </ul>
+        <p>Selamat bermain! 🎉</p>
+      </div>
+    </div>
+    <div class="modal__backdrop"></div>
+  </div>
+
 </body>
 </html>
